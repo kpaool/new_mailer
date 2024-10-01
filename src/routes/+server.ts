@@ -22,6 +22,9 @@ function createEmail(subject:string,body:string,receiver:string){
     }
 }
 
+function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 export const POST = async ({ request }) => {
     const data = await request.json();
     // Handle the data received from the request
@@ -50,22 +53,22 @@ export const POST = async ({ request }) => {
             }
         }); 
     }
+
     return new Promise<void>(async (resolve) => {
         // Collect promises for each email sending operation
-        const emailPromises = emails.map(async (email:string) => {
-            if(email!=""){
-                const emailPart = createEmail(data.subject,data.body,email)
+        for (const email of emails) {
+            if(email != "") {
+                const emailPart = createEmail(data.subject, data.body, email);
                 try {
-                    const info = await transporter.sendMail(emailPart)
+                    const info = await transporter.sendMail(emailPart);
                     // console.log("Message sent: %s", info);
                 } catch (error) {
                     console.log("Error sent: %s", error);
                 }
-            }            
-        });
-
-        // Wait for all email sending operations to complete
-        await Promise.all(emailPromises);
+                // Wait for 2.4 seconds before sending the next email
+                await delay(2400);
+            }
+        }
         resolve();
     }).then(() => {
         return new Response(JSON.stringify({ message: `${emails.length} Emails processed successfully` }), {
