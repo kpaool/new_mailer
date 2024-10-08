@@ -21,7 +21,7 @@ function createEmail(subject:string,body:string,receiver:string){
         to: `${receiver},`, // list of receivers
         subject, // Subject line
         text: body, // plain text body
-        html: `<b>${body}</b>`, // html body
+        html: `${body}`, // html body
     }
 }
 
