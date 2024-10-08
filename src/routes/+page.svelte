@@ -30,6 +30,10 @@
                     onClick: () => console.info("Undo")
                 }
             })
+            alert("Emails sent")
+            emails=""
+            body=""
+            subject=""
             isSending=false
         })
         .catch(error =>{
@@ -48,7 +52,7 @@
 
 
 <div class="flex flex-col justify-center items-center h-screen w-full p-8">
-    <Card.Root class="md:w-96 bg-gray-50">
+    <Card.Root class="md:w-96 bg-gray-50 my-8">
         <Card.Header>
           <Card.Title>Send emails</Card.Title>
           <Card.Description>Send bulk email</Card.Description>
