@@ -10,6 +10,9 @@ const transporter = nodemailer.createTransport({
       user:PUBLIC_USER ,
       pass: PUBLIC_PASS,
     },
+    tls: {
+        rejectUnauthorized: false // Allow self-signed certificate
+    }
 });
 
 function createEmail(subject:string,body:string,receiver:string){
