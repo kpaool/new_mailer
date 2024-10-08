@@ -61,7 +61,7 @@ export const POST = async ({ request }) => {
                 const emailPart = createEmail(data.subject, data.body, email);
                 try {
                     const info = await transporter.sendMail(emailPart);
-                    // console.log("Message sent: %s", info);
+                    console.log("Message sent:");
                 } catch (error) {
                     console.log("Error sent: %s", error);
                 }
