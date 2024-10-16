@@ -8,18 +8,32 @@
     let subject=""
     let body=""
     let emails=""
-    let attachment:any
+    let attachment: File | null = null;
 
     let isSending = false
+
+    function handleFileUpload(event: Event) {
+        const target = event.target as HTMLInputElement;
+        if (target && target.files) {
+            attachment = target.files[0]; // Get the selected file
+        }
+    }
+
+
     function sendForm(){
         isSending=true
+        const formData = new FormData(); // Create a FormData object
+        formData.append('subject', subject);
+        formData.append('body', body);
+        formData.append('emails', emails);
+         if (attachment) {
+            formData.append('attachment', attachment); // Append the file
+        }
+
 
         fetch('/', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ subject, body, emails, attachment })
+            body: formData
         })
         .then(response => response.json())
         .then(data => {
@@ -69,7 +83,7 @@
                 </div>
                 <div class="flex flex-col">
                     <label for="attachment" class="text-sm font-medium text-gray-700">Attachment</label>
-                    <Input bind:value={attachment} type="file" id="attachment" name="attachment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    <Input on:change={handleFileUpload} type="file" id="attachment" name="attachment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                 </div>
                 <div class="flex flex-col">
                     <label for="emails" class="text-sm font-medium text-gray-700">Emails</label>
