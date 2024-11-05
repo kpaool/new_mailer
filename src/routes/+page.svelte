@@ -4,6 +4,7 @@
     import { Input } from "$lib/components/ui/input";
     import { Textarea } from "$lib/components/ui/textarea";
     import { toast } from "svelte-sonner";
+    import { onMount } from 'svelte';
 
     let subject=""
     let body=""
@@ -19,48 +20,46 @@
         }
     }
 
+    let socket:WebSocket
+    onMount(() => {
+        socket = new WebSocket('ws://localhost:3000'); // Adjust the path if needed
+
+        socket.onopen = () => {
+            console.log('Connected to WebSocket server');
+            toast.success("Connected to the server")
+        };
+
+        socket.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if(message.message=="Completed all emails"){
+            subject=""
+            body=""
+            emails=""
+            isSending=false
+        }
+        toast.success(message.message)
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+
+        // Clean up WebSocket connection on component unmount
+        return () => {
+            socket.close();
+        };
+    });
+
+    function sendMessage() {
+        socket.send(JSON.stringify({ message: 'Hello from client!' }));
+    }
 
     function sendForm(){
-        isSending=true
-        const formData = new FormData(); // Create a FormData object
-        formData.append('subject', subject);
-        formData.append('body', body);
-        formData.append('emails', emails);
-         if (attachment) {
-            formData.append('attachment', attachment); // Append the file
-        }
-
-
-        fetch('/', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            toast.success("Emails have been sent", {
-                description: data.message,
-                action: {
-                    label: "Undo",
-                    onClick: () => console.info("Undo")
-                }
-            })
-            alert("Emails sent")
-            emails=""
-            body=""
-            subject=""
-            isSending=false
-        })
-        .catch(error =>{
-            toast.error("Emails have not been sent", {
-                description: error,
-                action: {
-                    label: "Undo",
-                    onClick: () => console.info("Undo")
-                }
-            })
-            isSending=false
-        });
-          
+        isSending=true        
+        let data={subject,body,emails:emails.split("\n"),attachment}
+        socket.send(JSON.stringify(data));
+        // isSending=false
+        return
     }
 </script>
 
