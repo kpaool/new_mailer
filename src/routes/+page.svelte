@@ -43,6 +43,7 @@
             isSending=false
         }
         toast.success(message.message)
+        isSending=false
         };
 
         socket.onclose = () => {
