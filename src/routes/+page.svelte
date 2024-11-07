@@ -12,6 +12,7 @@
     let attachment: File | null = null;
 
     let isSending = false
+    let isConnected=false
 
     function handleFileUpload(event: Event) {
         const target = event.target as HTMLInputElement;
@@ -26,6 +27,7 @@
 
         socket.onopen = () => {
             console.log('Connected to WebSocket server');
+            isConnected=true
             toast.success("Connected to the server")
         };
 
@@ -41,6 +43,7 @@
         };
 
         socket.onclose = () => {
+            isConnected=false
             console.log('WebSocket connection closed');
         };
 
@@ -89,7 +92,7 @@
                     <Textarea bind:value={emails} id="emails" name="emails"  rows=3 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></Textarea>
                 </div>
                 <div class="flex justify-end">
-                    <Button on:click={sendForm} disabled={isSending}>{isSending? 'Sending':'Send'}</Button>
+                    <Button on:click={sendForm} disabled={isSending&&isConnected}>{isSending? 'Sending':isConnected?'Send':'Refresh page'}</Button>
                 </div>
             </form>
         </Card.Content>
