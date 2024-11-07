@@ -4,7 +4,10 @@
     import { Input } from "$lib/components/ui/input";
     import { Textarea } from "$lib/components/ui/textarea";
     import { toast } from "svelte-sonner";
+    import { page } from '$app/stores';
     import { onMount } from 'svelte';
+
+    const webscocket=`ws://${$page.url.host.replaceAll(":5173",":4000").replaceAll(":3000",":4000")}`
 
     let subject=""
     let body=""
@@ -23,7 +26,7 @@
 
     let socket:WebSocket
     onMount(() => {
-        socket = new WebSocket('ws://localhost:4000'); // Adjust the path if needed
+        socket = new WebSocket(webscocket); // Adjust the path if needed
 
         socket.onopen = () => {
             console.log('Connected to WebSocket server');
