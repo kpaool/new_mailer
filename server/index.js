@@ -2,7 +2,7 @@ import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import dotenv from 'dotenv';
-dotenv.config({path:'../.env'});
+dotenv.config();
 import nodemailer from 'nodemailer';
 import { handler } from '../build/handler.js';
 
