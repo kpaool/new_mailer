@@ -22,7 +22,7 @@
 
     let socket:WebSocket
     onMount(() => {
-        socket = new WebSocket('ws://localhost:4000'); // Adjust the path if needed
+        socket = new WebSocket('ws://localhost:3000'); // Adjust the path if needed
 
         socket.onopen = () => {
             console.log('Connected to WebSocket server');
