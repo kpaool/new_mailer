@@ -82,7 +82,7 @@ wss.on('connection', (ws) => {
                 const emailPart = createEmail(input.subject, input.body, email); 
                 try {
                     const info = await transporter.sendMail(emailPart);
-                    // console.log("Message sent:", info);
+                    console.log("Message sent:", info);
                     ws.send(JSON.stringify({message:`Email sent to ${email}`}));
                 } catch (error) {
                     console.log("Error sent: %s", error);
