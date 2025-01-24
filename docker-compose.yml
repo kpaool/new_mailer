@@ -12,7 +12,7 @@ services:
 
   websocket:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.websocket
     ports:
       - "4040:4000"
