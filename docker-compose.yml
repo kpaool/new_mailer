@@ -1,15 +1,18 @@
 version: '3.8'
 
 services:
-  new_mailer:
-    container_name: new_mailer
+  sveltekit:
     build:
       context: .
-    env_file:
-      - .env
+      dockerfile: Dockerfile
     ports:
-      - 5173:5173
-    restart: always
-    volumes:
-      - /app/node_modules
-      - .:/app
+      - "3000:3000"
+    depends_on:
+      - websocket
+
+  websocket:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"

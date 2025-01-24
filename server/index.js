@@ -1,10 +1,59 @@
 import express from 'express';
+import { verifyEmail } from '@devmehq/email-validator-js';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import dotenv from 'dotenv';
 dotenv.config();
 import nodemailer from 'nodemailer';
 import { handler } from '../build/handler.js';
+import {emailVariations} from './emails.js'
+
+
+export async function isValidated(emailAddress,printResults=false){
+	const { validFormat, validSmtp, validMx } = await verifyEmail({ emailAddress, verifyMx: true, verifySmtp: true, timeout: 3000 });
+	if(printResults){
+		console.log(
+			{"validFormat":validFormat, 
+			"validSmtp":validSmtp, 
+			"validMx":validMx}
+		)
+	}
+	if(!validFormat){
+		return false
+	}
+	if(!validSmtp){
+		return false
+	}
+	if(!validMx){
+		return false
+	}
+	return true
+}
+
+async function ValidateEmail(email){
+    let tmpEmails =[email]
+    if(tmpEmails.length<1 || tmpEmails[0]==''){
+      alert("Please enter email")
+      return
+    }
+    try {
+        const validationPromises = tmpEmails.map(async email => {
+            const isValid = await isValidated(email,false);
+            console.log(isValid);
+            return isValid ? email : null;
+        });
+    
+        const results = await Promise.all(validationPromises);
+    
+        return results[0]
+      } catch (error) {            
+          console.error('There was a problem with the fetch operation:', error);
+          return null
+      }
+    
+  }
+
+
 
 const transporter = nodemailer.createTransport({
     host: process.env.PUBLIC_HOST,
@@ -19,26 +68,30 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-function createEmail(subject,body,receiver, attachmentBuffer=null, filename=null){
-    const emailOptions = {
-        from: `"${process.env.PUBLIC_USERNAME}" <${process.env.PUBLIC_EMAIL}>`, // sender address
-        to: `${receiver}`, // list of receivers
-        subject, // Subject line
-        text: body, // plain text body
-        html: `${body}`, // html body
-    };
+function capitalizeFirstLetter(str) {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
-    // Add attachment if provided
-    if (attachmentBuffer) {
-        emailOptions.attachments = [
-            {
-                filename: filename || 'attachment', // Use provided filename or default
-                content: attachmentBuffer, // Use the buffer directly
-            },
-        ];
+function createEmail(to,product, attachments){
+
+    try {
+        const randomIndex = Math.floor(Math.random() * emailVariations.length);
+        const randomEmailVariation = emailVariations[randomIndex];
+        let subject = randomEmailVariation.subject.replace("{{product}}", product).toUpperCase()
+        let text = randomEmailVariation.body.replace("{{receiver}}", capitalizeFirstLetter(to.split("@")[0])).replace("{{product}}", product);
+    
+        let data ={
+            from: '"Nomonde Thafeni" <nomonde.thafeni@labour-tendersrfqs.org>',
+            to:[to],
+            subject,
+            plain_body:text,
+            attachments
+        }
+        return data
+    } catch (error) {
+        console.log(error)
     }
-
-    return emailOptions;
 }
 
 function delay(ms) {
@@ -64,14 +117,15 @@ wss.on('connection', (ws) => {
     try {
         input = JSON.parse(stringData)
 
-        if(input.subject==""){
-            ws.send(JSON.stringify({message:`Subject is empty`}));
+        if(input.product==""){
+            ws.send(JSON.stringify({message:`Product is empty`}));
             return
         }
-        if(input.body==""){
-            ws.send(JSON.stringify({message:`Body is empty`}));
-            return
+        if(input.attachments.length==0){
+            ws.send(JSON.stringify({message:`There are no attachments`}));
+            // return
         }
+
         if(input.emails.length ==1 && input.emails[0]==""){
             ws.send(JSON.stringify({message:`Add emails`}));
             return
@@ -79,14 +133,36 @@ wss.on('connection', (ws) => {
 
         for (const email of input.emails) {
             if(email != "") {
-                const emailPart = createEmail(input.subject, input.body, email); 
-                try {
-                    const info = await transporter.sendMail(emailPart);
-                    console.log("Message sent:", info);
-                    ws.send(JSON.stringify({message:`Email sent to ${email}`}));
-                } catch (error) {
-                    console.log("Error sent: %s", error);
+                let validEmail= await ValidateEmail(email)
+                let emailPart
+                if(validEmail){
+                    ws.send(JSON.stringify({message:`${email} is not valid`}));
+                    console.log(`${email} is not valid`)
+                    continue
+                }else{
+                    emailPart = createEmail(email,input.product, input.attachments);
                 }
+                try {
+                    const response = await fetch(process.env.PUBLIC_SMTP_HOST_URL+'/api/v1/send/message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Server-API-Key': process.env.PUBLIC_API_KEY // Add your API key here
+                        },
+                        body: JSON.stringify(emailPart)
+                    });
+            
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+            
+                    const result = await response.json();
+                    ws.send(JSON.stringify({message:`Email sent successfully to ${email}`}));
+                  } catch (error) {
+                    ws.send(JSON.stringify({message:`Couldnt send email`}));
+                    console.log(error)
+                }
+            
                 // Wait for 2.4 seconds before sending the next email
                 await delay(2400);
             }

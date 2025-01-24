@@ -10,19 +10,30 @@
     const webscocket=`ws://${$page.url.host.replaceAll(":5173",":4000").replaceAll(":3000",":4000")}`
 
     let subject=""
+    let product=""
     let body=""
     let emails=""
-    let attachment: File | null = null;
+    let selectedFiles: FileList | null = null;
 
     let isSending = false
     let isConnected=false
 
-    function handleFileUpload(event: Event) {
-        const target = event.target as HTMLInputElement;
-        if (target && target.files) {
-            attachment = target.files[0]; // Get the selected file
-        }
+    async function fileToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = error => reject(error);
+            reader.readAsDataURL(file);
+        });
     }
+
+    // function handleFileUpload(event: Event) {
+    //     console.log("adding attachments")
+    //     const target = event.target as HTMLInputElement;
+    //     if (target && target.files) {
+    //         attachment = target.files[0]; // Get the selected file
+    //     }
+    // }
 
     let socket:WebSocket
     onMount(() => {
@@ -61,9 +72,21 @@
         socket.send(JSON.stringify({ message: 'Hello from client!' }));
     }
 
-    function sendForm(){
+    async function sendForm(){
+        const attachments = [];
+        if (selectedFiles) {
+            for (const file of Array.from(selectedFiles)) {
+                const base64 = await fileToBase64(file);
+                attachments.push({
+                    name: file.name,
+                    data: base64.split(',')[1], // Remove the data URL prefix
+                    content_type: file.type
+                });
+            }
+        }
+
         isSending=true        
-        let data={subject,body,emails:emails.split("\n"),attachment}
+        let data={product,emails:emails.split("\n"),attachments}
         socket.send(JSON.stringify(data));
         // isSending=false
         return
@@ -80,16 +103,16 @@
         <Card.Content>
             <form class="space-y-4">
                 <div class="flex flex-col">
-                    <label for="subject" class="text-sm font-medium text-gray-700">Subject</label>
-                    <Input bind:value={subject} type="text" id="subject" name="subject" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    <label for="product" class="text-sm font-medium text-gray-700">Product</label>
+                    <Input bind:value={product} type="text" id="product" name="product" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                 </div>
-                <div class="flex flex-col">
+                <!-- <div class="flex flex-col">
                     <label for="email-body" class="text-sm font-medium text-gray-700">Email Body</label>
                     <Textarea bind:value={body} id="email-body" name="email-body" rows=3 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></Textarea>
-                </div>
+                </div> -->
                 <div class="flex flex-col">
                     <label for="attachment" class="text-sm font-medium text-gray-700">Attachment</label>
-                    <Input on:change={handleFileUpload} type="file" id="attachment" name="attachment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+                    <input bind:files={selectedFiles} type="file" id="attachment" name="attachment" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
                 </div>
                 <div class="flex flex-col">
                     <label for="emails" class="text-sm font-medium text-gray-700">Emails</label>
