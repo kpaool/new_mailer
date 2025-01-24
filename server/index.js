@@ -135,7 +135,7 @@ wss.on('connection', (ws) => {
             if(email != "") {
                 let validEmail= await ValidateEmail(email)
                 let emailPart
-                if(validEmail){
+                if(!validEmail){
                     ws.send(JSON.stringify({message:`${email} is not valid`}));
                     console.log(`${email} is not valid`)
                     continue
