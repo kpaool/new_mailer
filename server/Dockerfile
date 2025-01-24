@@ -5,7 +5,7 @@ FROM node:18
 WORKDIR /usr/src/server
 
 # Copy application dependency manifests to the container image.
-COPY package*.json ./
+COPY ../package*.json ./
 
 # Install production dependencies.
 RUN npm install
@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Run the web service on container startup.
-CMD [ "node", "./server/index.js" ]
+CMD [ "node", "index.js" ]
 
 # Expose the port the WebSocket server runs on
 EXPOSE 4000
