@@ -6,8 +6,12 @@
     import { toast } from "svelte-sonner";
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
+    import {PUBLIC_APP_ENVIRONMENT} from '$env/static/public'
 
-    const webscocket=`ws://${$page.url.host.replaceAll(":5757",":4040").replaceAll(":3000",":4040")}`
+    const webscocket= PUBLIC_APP_ENVIRONMENT =="dev"?
+     `ws://${$page.url.host.replaceAll(":5173",":4000").replaceAll(":5173",":4000")}`:
+     `ws://${$page.url.host.replaceAll(":5757",":4040").replaceAll(":3000",":4040")}`
+
 
     let subject=""
     let product=""
@@ -53,8 +57,7 @@
             emails=""
             isSending=false
         }
-        toast.success(message.message)
-        isSending=false
+        toast.success(message.message)        
         };
 
         socket.onclose = () => {

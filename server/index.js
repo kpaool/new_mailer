@@ -80,9 +80,10 @@ function createEmail(to,product, attachments){
         const randomEmailVariation = emailVariations[randomIndex];
         let subject = randomEmailVariation.subject.replace("{{product}}", product).toUpperCase()
         let text = randomEmailVariation.body.replace("{{receiver}}", capitalizeFirstLetter(to.split("@")[0])).replace("{{product}}", product);
+        text=text.replaceAll("{{department}}",process.env.DEPARTMENT).replaceAll("{{end_credits}}",process.env.END_CREDITS)
     
         let data ={
-            from: '"Nomonde Thafeni" <nomonde.thafeni@labour-tendersrfqs.org>',
+            from: process.env.FROM,
             to:[to],
             subject,
             plain_body:text,
@@ -98,6 +99,11 @@ function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function safeSend(ws, message) {
+    if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(message))
+    }
+  }
 
 const port = 4000;
 const app = express();
@@ -109,7 +115,7 @@ const wss = new WebSocketServer({ server });
 wss.on('connection', (ws) => {
 //   ws.send('Hello, World 👋');
 
-  ws.send(JSON.stringify({ message: 'Welcome to the WebSocket server!' }));
+  safeSend(ws, { message: 'Welcome to the WebSocket server!' });
 
   ws.on('message', async (data) => {
     let stringData = data.toString('utf-8');
@@ -118,16 +124,16 @@ wss.on('connection', (ws) => {
         input = JSON.parse(stringData)
 
         if(input.product==""){
-            ws.send(JSON.stringify({message:`Product is empty`}));
+            safeSend(ws, {message:`Product is empty`});
             return
         }
         if(input.attachments.length==0){
-            ws.send(JSON.stringify({message:`There are no attachments`}));
+            safeSend(ws, {message:`There are no attachments`});
             // return
         }
 
         if(input.emails.length ==1 && input.emails[0]==""){
-            ws.send(JSON.stringify({message:`Add emails`}));
+            safeSend(ws, {message:`Add emails`});
             return
         }
 
@@ -136,7 +142,7 @@ wss.on('connection', (ws) => {
                 let validEmail= await ValidateEmail(email)
                 let emailPart
                 if(!validEmail){
-                    ws.send(JSON.stringify({message:`${email} is not valid`}));
+                    safeSend(ws, {message:`${email} is not valid`});
                     console.log(`${email} is not valid`)
                     continue
                 }else{
@@ -157,9 +163,9 @@ wss.on('connection', (ws) => {
                     }
             
                     const result = await response.json();
-                    ws.send(JSON.stringify({message:`Email sent successfully to ${email}`}));
+                    safeSend(ws, {message:`Email sent successfully to ${email}`});
                   } catch (error) {
-                    ws.send(JSON.stringify({message:`Couldnt send email`}));
+                    safeSend(ws, {message:`Couldnt send email`});
                     console.log(error)
                 }
             
@@ -174,7 +180,7 @@ wss.on('connection', (ws) => {
     // console.log('Received:',input );
 
 
-    ws.send(JSON.stringify({message:`Completed all emails`}));
+    safeSend(ws, {message:`Completed all emails`});
   });
 
   ws.on('close', () => {
