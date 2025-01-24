@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # Run the web service on container startup.
-CMD [ "npm", "run", "preview" ]
+CMD [ "npm", "run", "start" ]
 
 # Expose the port the app runs on
 EXPOSE 3000
