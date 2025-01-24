@@ -7,7 +7,7 @@
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
 
-    const webscocket=`ws://${$page.url.host.replaceAll(":5173",":4000").replaceAll(":3000",":4000")}`
+    const webscocket=`ws://${$page.url.host.replaceAll(":5757",":4040").replaceAll(":3000",":4040")}`
 
     let subject=""
     let product=""
